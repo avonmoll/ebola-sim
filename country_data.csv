@@ -1,1 +1,7 @@
-Name,Population,S ? E,E ? I,I ? H,I ? F,I ? R,H ? F,H ? R,F ? R,Initial Infected
+Name;Code;Population;S_E;E_I;I_H;H_F;F_R;I_R;I_F;H_R;Initial_Infected
+Papua New Guinea;GIN;;;;;;;;;;
+Liberia;LBR;;;;;;;;;;
+Sierra Leone;WAL;;;;;;;;;;
+Nigeria;WAN;;;;;;;;;;
+Senegal;SEN;;;;;;;;;;
+Mali;RMM;;;;;;;;;;
