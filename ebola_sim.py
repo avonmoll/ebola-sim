@@ -5,6 +5,7 @@ import numpy as np
 import csv
 import heapq
 import RNG
+import random
  
 countries = []
 Now = 0
@@ -104,10 +105,23 @@ class Flight_Generator(object):
     def Execute_Todays_Flights(cls):
         while(cls.flightq[0][0] == Now):
             flight = heapq.heappop(cls.flightq)
-            
+
             #TODO : select individuals at random from the S & E populations
-            #TODO : update these individuals' location with the destination
+            poisson_lambda=float(len(flight[1].I))/float(len(flight[1].I)+flight[1].S)
+            s=np.random.poisson(poisson_lambda)
+
             #TODO : remove them from origin population list and add to destination population list
+            infected_transfer=flight[1].I.pop(s)
+            flight[2].I.append(infected_transfer)
+            flight[1].S=flight[1].S-1
+            flight[2].S=flight[2].S+1
+
+            #TODO : update these individuals' location with the destination
+            infected_transfer.location=flight[2].code
+
+            #TODO : update the Disease model
+            flight[1].Update_Disease_Model()
+            flight[2].Update_Disease_Model()
         
 class Route(object):
     def __init__(self, source, dest, mean_period):
@@ -119,6 +133,7 @@ class Route(object):
         global Now
         delta_t = np.round(RNG.Exponential(self.T))
         Flight_Generator.Schedule_Flight(Now+delta_t, self.source, self.dest, PASSENGERS)
+
 
 def run(maxDays = 365):
     global Now
@@ -147,3 +162,4 @@ def initialize():
         for row in country_reader:
             countries.append(Country(*row))
     Flight_Generator.Initialize()        
+
