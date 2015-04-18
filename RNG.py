@@ -27,19 +27,28 @@ def Exponential(scale):
     return rv
     
 #Sample from Poisson distribution 
-def Poisson(scale):
-    """Sample from Poisson distribution whose mean = scale
+def Poisson(scale, n = 1):
+    """Take n samples from Poisson distribution whose mean = scale
     
     Based on inverse transform sampling (Devroye, Luc (1986). "Discrete 
     Univariate Distributions". Non-Uniform Random Variate Generation. New York: 
     Springer-Verlag. p. 505)
     """
-    u = Random()
-    x = 0
-    p = np.exp(-scale)
-    s = p
-    while u > s:
-        x = x + 1
-        p = p*scale/x
-        s = s + p
-    return x
+    x = np.zeros(n)
+    for i in range(n):
+        u = Random()
+        p = np.exp(-scale)
+        s = p
+        while u > s:
+            x[i] = x[i] + 1
+            p = p*scale/x[i]
+            s = s + p
+    if len(x) == 1:
+        return x[0]
+    else:
+        return x
+        
+# Sample from Normal distribution
+def Normal(mean, std):
+    #TODO : write our own version of this if possible!
+    return np.normal(mean,std)
