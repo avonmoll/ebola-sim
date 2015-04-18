@@ -1,7 +1,7 @@
-Name;Code;Population;S_E;E_I;I_H;H_F;F_R;I_R;I_F;H_R;Initial_Infected
-Papua New Guinea;GIN;;;;;;;;;;
-Liberia;LBR;;;;;;;;;;
-Sierra Leone;WAL;;;;;;;;;;
-Nigeria;WAN;;;;;;;;;;
-Senegal;SEN;;;;;;;;;;
-Mali;RMM;;;;;;;;;;
+Name,Code,Population,S_E,E_I,I_H,H_F,F_R,I_R,I_F,H_R,Initial_Infected
+Papua New Guinea,GIN,11750000,,,,,,,,,
+Liberia,LBR,4294000,,,,,,,,,
+Sierra Leone,WAL,6092000,,,,,,,,,
+Nigeria,WAN,173600000,,,,,,,,,
+Senegal,SEN,14130000,,,,,,,,,
+Mali,RMM,15300000,,,,,,,,,

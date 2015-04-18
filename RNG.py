@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.stats as stats
 
 x = 19 #initialize seed for first call
 
@@ -34,7 +35,7 @@ def Poisson(scale, n = 1):
     Univariate Distributions". Non-Uniform Random Variate Generation. New York: 
     Springer-Verlag. p. 505)
     """
-    x = np.zeros(n)
+    x = np.zeros(n,dtype=int)
     for i in range(n):
         u = Random()
         p = np.exp(-scale)
@@ -51,4 +52,7 @@ def Poisson(scale, n = 1):
 # Sample from Normal distribution
 def Normal(mean, std):
     #TODO : write our own version of this if possible!
-    return np.normal(mean,std)
+    #return np.random.normal(mean,std)
+    lower, upper = 0,10
+    tnorm = stats.truncnorm((lower-mean)/std, (upper-mean)/std, mean, std)
+    return tnorm.rvs()

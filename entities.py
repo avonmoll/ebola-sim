@@ -13,20 +13,20 @@ class Country(object):
     def __init__(self, name, code, pop, s_e, e_i, i_h, i_f, i_r, h_f, h_r, f_r, I0):
         self.name = name
         self.code = code
-        self.population = pop
+        self.pop = int(pop)
         
         # State Transition Rates
-        self.s_e = s_e
-        self.e_i = e_i
-        self.i_h = i_h
-        self.i_f = i_f
-        self.i_r = i_r
-        self.h_f = h_f
-        self.h_r = h_r
-        self.f_r = f_r
+        self.s_e = float(s_e)
+        self.e_i = float(e_i)
+        self.i_h = float(i_h)
+        self.i_f = float(i_f)
+        self.i_r = float(i_r)
+        self.h_f = float(h_f)
+        self.h_r = float(h_r)
+        self.f_r = float(f_r)
         
         # Containers for compartmentalized model of population
-        self.S = pop
+        self.S = self.pop
         self.E = []
         self.I = []
         self.H = []
@@ -75,15 +75,17 @@ class Flight_Generator(object):
     def Initialize(cls, countries):
         cls.flightq = []
         cls.routes = []
-        with open('relavant_routes.csv') as csvfile:
+        with open('relevant_routes.csv') as csvfile:
             csvreader = csv.reader(csvfile,delimiter=',')
+            csvreader.next()
             for row in csvreader:
                 orig = [c for c in countries if c.name == row[-5]][0]
                 dest = [c for c in countries if c.name == row[-4]][0]
-                T = row[-3]
-                T_std = row[-2]
-                seats = row[-1]
-                cls.routes.append(Route(orig,dest,T,T_std,seats))                
+                T = float(row[-3])
+                T_std = float(row[-2])
+                seats = int(row[-1])
+                cls.routes.append(Route(orig,dest,T,T_std,seats))
+                cls.routes[-1].Schedule_Next(0)                
 
     @classmethod
     def Schedule_Flight(cls, time, route):
@@ -98,27 +100,32 @@ class Flight_Generator(object):
     @classmethod
     def Execute_Todays_Flights(cls, Now):
         while(cls.flightq[0][0] == Now):
-            flight = heapq.heappop(cls.flightq)
+            _, flight = heapq.heappop(cls.flightq)
             
             #select individuals at random from the S & E populations
             poisson_lambda=float(len(flight.orig.E))/float(len(flight.orig.E)+flight.orig.S)
             s=np.sum(RNG.Poisson(poisson_lambda, flight.seats))
 
             #remove them from origin population list and add to destination population list
-            infected_transfer=flight.orig.I.pop(s)
-            # TODO : make the selection from I population random such as:
-            #         infected_transfer = [flight.orig.I[i] for i in sorted(np.random.sample(xrange(len(flight.orig.I)),s))]
-            flight.dest.I.extend(infected_transfer)
+            if s > 0:
+                s = len(flight.orig.E) if s > len(flight.orig.E) else s
+                np.shuffle(flight.orig.E)
+                exposed_transfer=flight.orig.E[:s]
+                flight.orig.E = flight.orig.E[s:]
+            
+                # TODO : make the selection from I population random such as:
+                #         infected_transfer = [flight.orig.I[i] for i in sorted(np.random.sample(xrange(len(flight.orig.I)),s))]
+            
+                flight.dest.E.extend(exposed_transfer)
+     
+                #update these individuals' location with the destination
+                for individual in exposed_transfer:
+                    individual.location = flight.dest
+     
             flight.orig.S=flight.orig.S - (flight.seats - s)
             flight.dest.S=flight.orig.S + (flight.seats - s)
-
-            #update these individuals' location with the destination
-            for individual in infected_transfer:
-                individual.location = flight.dest
-
-            #update the Disease model
-            #flight[1].Update_Disease_Model()
-            #flight[2].Update_Disease_Model()
+            flight.orig.pop = flight.orig.pop - flight.seats
+            flight.dest.pop = flight.dest.pop + flight.seats
             
             #schedule next flight
             flight.Schedule_Next(Now)
@@ -132,6 +139,5 @@ class Route(object):
         self.seats = seats
     
     def Schedule_Next(self,Now):
-        global Now
         delta_t = abs(int(RNG.Normal(self.T, self.T_std)))
         Flight_Generator.Schedule_Flight(Now+delta_t, self)

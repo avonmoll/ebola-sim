@@ -29,6 +29,7 @@ def initialize():
     countries = []
     with open('country_data.csv','rb') as csvfile:
         country_reader = csv.reader(csvfile, delimiter=',')
+        country_reader.next()
         for row in country_reader:
             countries.append(Country(*row))
     Flight_Generator.Initialize(countries)    
