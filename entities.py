@@ -96,7 +96,7 @@ class Flight_Generator(object):
             r.T = factor*r.T
     
     @classmethod
-    def Execute_Todays_Flights(cls):
+    def Execute_Todays_Flights(cls, Now):
         while(cls.flightq[0][0] == Now):
             flight = heapq.heappop(cls.flightq)
             
@@ -105,8 +105,9 @@ class Flight_Generator(object):
             s=np.sum(RNG.Poisson(poisson_lambda, flight.seats))
 
             #remove them from origin population list and add to destination population list
-            # infected_transfer=flight.orig.I.pop(s)
-            infected_transfer = [flight.orig.I[i] for i in sorted(np.random.sample(xrange(len(flight.orig.I)),s))]
+            infected_transfer=flight.orig.I.pop(s)
+            # TODO : make the selection from I population random such as:
+            #         infected_transfer = [flight.orig.I[i] for i in sorted(np.random.sample(xrange(len(flight.orig.I)),s))]
             flight.dest.I.extend(infected_transfer)
             flight.orig.S=flight.orig.S - (flight.seats - s)
             flight.dest.S=flight.orig.S + (flight.seats - s)
@@ -120,7 +121,7 @@ class Flight_Generator(object):
             #flight[2].Update_Disease_Model()
             
             #schedule next flight
-            flight.Schedule_Next()
+            flight.Schedule_Next(Now)
         
 class Route(object):
     def __init__(self, orig, dest, mean_period, std_period, seats):
@@ -130,7 +131,7 @@ class Route(object):
         self.T_std = std_period
         self.seats = seats
     
-    def Schedule_Next(self):
+    def Schedule_Next(self,Now):
         global Now
         delta_t = abs(int(RNG.Normal(self.T, self.T_std)))
         Flight_Generator.Schedule_Flight(Now+delta_t, self)
