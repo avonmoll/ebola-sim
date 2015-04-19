@@ -109,7 +109,7 @@ class Flight_Generator(object):
             #remove them from origin population list and add to destination population list
             if s > 0:
                 s = len(flight.orig.E) if s > len(flight.orig.E) else s
-                np.shuffle(flight.orig.E)
+                np.random.shuffle(flight.orig.E)
                 exposed_transfer=flight.orig.E[:s]
                 flight.orig.E = flight.orig.E[s:]
             
