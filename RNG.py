@@ -6,7 +6,7 @@ x = 19 #initialize seed for first call
 def Random():
     #suggested values for Lehmer (Lemmis/Park)
     global x
-    m = np.power(2,31)-1 #modulus value = 2,147,483,647
+    m = 2147483647 #modulus value = np.power(2,31)-1
     a = 48271 #multiplier
     q = 44488
     r = 3399
@@ -53,6 +53,8 @@ def Poisson(scale, n = 1):
 def Normal(mean, std):
     #TODO : write our own version of this if possible!
     #return np.random.normal(mean,std)
-    lower, upper = 0,10
+    if std == 0:
+        return mean
+    lower, upper = 0,1000
     tnorm = stats.truncnorm((lower-mean)/std, (upper-mean)/std, mean, std)
     return tnorm.rvs()
