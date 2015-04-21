@@ -193,5 +193,5 @@ class Route(object):
         self.seats = seats
     
     def Schedule_Next(self,Now):
-        delta_t = abs(int(RNG.Normal(self.T, self.T_std)))
+        delta_t = int(abs(round(RNG.Normal(self.T, self.T_std), 0))
         Flight_Generator.Schedule_Flight(Now+delta_t, self)
