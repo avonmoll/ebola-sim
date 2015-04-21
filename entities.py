@@ -11,21 +11,25 @@ class State:
     S, E, I, H, F, R = range(6)
            
 class Country(object):
-    def __init__(self, name, code, pop, s_e, e_i, i_h, i_f, i_r, h_f, h_r, f_r, I0):
+    def __init__(self, name, code, pop, incubation_period, symptoms_to_hospital, symptoms_to_death, hospital_to_death, infectious_period, hospital_to_noninfectious, death_to_burial, beta_i, beta_h, beta_f, percent_hospitalized, fatality_rate, I0):
         self.name = name
         self.code = code
         self.pop = int(pop)
         
-        # State Transition Rates
-        self.s_e = float(s_e)
-        self.e_i = float(e_i)
-        self.i_h = float(i_h)
-        self.i_f = float(i_f)
-        self.i_r = float(i_r)
-        self.h_f = float(h_f)
-        self.h_r = float(h_r)
-        self.f_r = float(f_r)
-
+        # State Parameters
+        self.incubation_period = float(incubation_period)
+        self.symptoms_to_hospital = float(symptoms_to_hospital)
+        self.symptoms_to_death = float(symptoms_to_death)
+        self.hospital_to_death = float(hospital_to_death)
+        self.infectious_period = float(infectious_period)
+        self.hospital_to_noninfectious = float(hospital_to_noninfectious)
+        self.death_to_burial = float(death_to_burial)
+        self.beta_i = float(beta_i)
+        self.beta_h = float(beta_h)
+        self.beta_f = float(beta_f)
+        self.percent_hospitalized = float(percent_hospitalized)
+        self.fatality_rate = float(fatality_rate)
+        
         # Containers for compartmentalized model of population
         self.S = self.pop
         self.E = []
@@ -38,13 +42,23 @@ class Country(object):
         if I0 > 0:
             self.S = self.S - I0
             self.I = [Person(location = self, state = State.I) for p in range(I0)]
+
+        # Initialize transition parameters
+        self.Update_Disease_Model()
             
     def Update_Disease_Model(self):
         """Recalculate state transition parameters based on current population makeup
         
         No return value
         """
-        raise NotImplementedError
+        self.s_e = (self.beta_i * self.S * self.I + self.beta_h * self.S * self.H + self.beta_f * self.S * self.F)/self.pop
+        self.e_i = self.E * (1/self.incubation_period)
+        self.i_h = self.percent_hospitalized * self.I * (1/self.symptoms_to_hospital)
+        self.h_f = self.fatality_rate * self.H * (1/self.hospital_to_death)
+        self.f_r = self.F * (1/self.death_to_burial)
+        self.i_r = (1-self.percent_hospitalized) * (1-self.fatality_rate) * self.I * (1/self.infectious_period)
+        self.i_f = (1-self.percent_hospitalized) * self.fatality_rate * self.I * (1/self.symptoms_to_death)
+        self.h_r = (1-self.fatality_rate) * self.H * (1/self.hospital_to_noninfectious)
         
     def Travel_Reduction(self):
         if len(self.I) > settings.THRESHOLD:
