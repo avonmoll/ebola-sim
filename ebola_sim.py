@@ -1,9 +1,9 @@
 # Ebola Simulation
 
+import test_script
 import settings
 import csv
 from entities import *
-import numpy as np
 import pandas as pd
  
 countries = []
@@ -16,9 +16,9 @@ def iter():
         co.Update_Disease_Model()
         
         # Perform travel restrictions based on epidemic size
-        if len(co.I) >= settings.THRESHOLD:
-            co.travel_factor = settings.TF0 + settings.TF_SLOPE * (len(co.I) - settings.THRESHOLD)
-            
+        if len(co.I) >= test_script.threshhold_setting:
+            co.travel_factor = test_script.TF0_setting + settings.TF_SLOPE * (len(co.I) - test_script.threshhold_setting)
+
         co.S_history.append(co.S)
         co.E_history.append(len(co.E))
         co.I_history.append(len(co.I))

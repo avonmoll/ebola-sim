@@ -10,7 +10,11 @@ import pandas as pd
 import time
 import matplotlib.pyplot as plt
 import numpy as np
+import settings
 #import pprofile
+
+threshhold_setting=[]
+TF0_setting=[]
 
 def main():
     # TODO : mess with settings
@@ -22,12 +26,16 @@ def main():
     #profiler = pprofile.Profile()
     
     #with profiler:
-    for i in range(20):
-        tic = time.clock()
-        output = engine.run(ebola_sim)
-        results.append(output)
-        toc = time.clock()
-        print '%02d Execution Time  -- %d:%02d mm:ss'%(i, int((toc-tic)/60),int((toc-tic)%60))
+    for threshhold in settings.THRESHHOLD_RANGE:
+        for TF0 in settings.TF0_RANGE:
+            threshhold_setting=threshhold
+            TF0_setting=TF0
+            for i in range(2):
+                tic = time.clock()
+                output = engine.run(ebola_sim)
+                results.append(output)
+                toc = time.clock()
+                print '%02d Execution Time  -- %d:%02d mm:ss'%(i, int((toc-tic)/60),int((toc-tic)%60))
     #profiler.dump_stats('profile')
     aggregate(results)
 
