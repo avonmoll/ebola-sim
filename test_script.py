@@ -14,7 +14,7 @@ import numpy as np
 
 def main():
     # TODO : mess with settings
-    ebola_sim.settings.maxIter = 30
+    ebola_sim.settings.maxIter = 180
     ebola_sim.settings.I0['Guinea'] = 50
     
     results = []
@@ -22,13 +22,14 @@ def main():
     #profiler = pprofile.Profile()
     
     #with profiler:
-    for i in range(5):
+    for i in range(20):
         tic = time.clock()
         output = engine.run(ebola_sim)
         results.append(output)
         toc = time.clock()
         print '%02d Execution Time  -- %d:%02d mm:ss'%(i, int((toc-tic)/60),int((toc-tic)%60))
     #profiler.dump_stats('profile')
+    aggregate(results)
 
 def aggregate(res_list):
     countries = res_list[0]['Country']
@@ -63,15 +64,21 @@ def plot_results():
         
         x = range(ebola_sim.settings.maxIter + 1)
         a = 0.2
-        ax[0].plot(x, s_ave, 'b', e_ave, 'g', i_ave, 'r', h_ave, 'y', f_ave, 'k', r_ave, 'k--') 
+        ax[0].plot(x, s_ave, 'b')
+        tax = ax[0].twinx()
+        tax.plot(x,e_ave, 'g', i_ave, 'r', h_ave, 'y', f_ave, 'k', r_ave, 'k--') 
         ax[0].fill_between(x, s_ave-s_std, s_ave+s_std, color = 'b', alpha=a)
-        ax[0].fill_between(x, e_ave-e_std, e_ave+e_std, color = 'g', alpha=a)
-        ax[0].fill_between(x, i_ave-i_std, i_ave+i_std, color = 'r', alpha=a)
-        ax[0].fill_between(x, h_ave-h_std, h_ave+h_std, color = 'y', alpha=a)
-        ax[0].fill_between(x, f_ave-f_std, f_ave+f_std, color = 'k', alpha=a)
-        ax[0].fill_between(x, r_ave-r_std, r_ave+r_std, color = 'k', alpha=a)
-        ax[0].legend(['S','E','I','H','F','R'],bbox_to_anchor=(1.05,1),loc=2,borderaxespad=0.)
-        ax[0].set_title(country.decode('utf-8'))
+        tax.fill_between(x, e_ave-e_std, e_ave+e_std, color = 'g', alpha=a)
+        tax.fill_between(x, i_ave-i_std, i_ave+i_std, color = 'r', alpha=a)
+        tax.fill_between(x, h_ave-h_std, h_ave+h_std, color = 'y', alpha=a)
+        tax.fill_between(x, f_ave-f_std, f_ave+f_std, color = 'k', alpha=a)
+        tax.fill_between(x, r_ave-r_std, r_ave+r_std, color = 'k', alpha=a)
+        #tax.legend(['S','E','I','H','F','R'],bbox_to_anchor=(1.05,1),loc=2,borderaxespad=0.)
+        ax[0].legend(['S'], loc = 3) 
+        tax.legend(['E','I','H','F','R'],loc=2)
+        tax.set_title(country.decode('utf-8'))
+        ax[0].set_ylabel('S')
+        tax.set_ylabel('E, I, H, F, R')
         
         o_ave, o_std = np.array(c_ave['OnsetCases']), np.array(c_std['OnsetCases'])
         d_ave, d_std = np.array(c_ave['Deaths']), np.array(c_std['Deaths'])
