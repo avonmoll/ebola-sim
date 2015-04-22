@@ -16,7 +16,7 @@ def run(application):
     '''
     
     application.initialize()
-    for i in application.settings.maxIter:
+    for i in range(application.settings.maxIter):
         application.iter()
         application.Now += 1
     return application.output()

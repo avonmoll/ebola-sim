@@ -39,10 +39,21 @@ class Country(object):
         self.R = []
         
         # Seed initial infected (I) population
-        if I0 > 0:
-            self.S = self.S - I0
+        if (self.name in settings.I0) and (settings.I0[self.name] > 0):
+            I0 = settings.I0[self.name]
+            self.S = self.S - settings.I0[self.name]
             self.I = [Person(location = self, state = State.I) for p in range(I0)]
-
+        
+        # Timeseries history of population makeup
+        self.S_history = [self.S]
+        self.E_history = [len(self.E)]
+        self.I_history = [len(self.I)]
+        self.H_history = [len(self.H)]
+        self.F_history = [len(self.F)]
+        self.R_history = [len(self.R)]
+        self.onset_history = [0]
+        self.death_history = [0]
+        
         # Initialize transition parameters
         self.Update_Disease_Model()
             
@@ -51,14 +62,14 @@ class Country(object):
         
         No return value
         """
-        self.s_e = (self.beta_i * self.S * self.I + self.beta_h * self.S * self.H + self.beta_f * self.S * self.F)/self.pop
-        self.e_i = self.E * (1/self.incubation_period)
-        self.i_h = self.percent_hospitalized * self.I * (1/self.symptoms_to_hospital)
-        self.h_f = self.fatality_rate * self.H * (1/self.hospital_to_death)
-        self.f_r = self.F * (1/self.death_to_burial)
-        self.i_r = (1-self.percent_hospitalized) * (1-self.fatality_rate) * self.I * (1/self.infectious_period)
-        self.i_f = (1-self.percent_hospitalized) * self.fatality_rate * self.I * (1/self.symptoms_to_death)
-        self.h_r = (1-self.fatality_rate) * self.H * (1/self.hospital_to_noninfectious)
+        self.s_e = (self.beta_i * self.S * len(self.I) + self.beta_h * self.S * len(self.H) + self.beta_f * self.S * len(self.F))/self.pop
+        self.e_i = len(self.E) * (1/self.incubation_period)
+        self.i_h = self.percent_hospitalized * len(self.I) * (1/self.symptoms_to_hospital)
+        self.h_f = self.fatality_rate * len(self.H) * (1/self.hospital_to_death)
+        self.f_r = len(self.F) * (1/self.death_to_burial)
+        self.i_r = (1-self.percent_hospitalized) * (1-self.fatality_rate) * len(self.I) * (1/self.infectious_period)
+        self.i_f = (1-self.percent_hospitalized) * self.fatality_rate * len(self.I) * (1/self.symptoms_to_death)
+        self.h_r = (1-self.fatality_rate) * len(self.H) * (1/self.hospital_to_noninfectious)
         
     def Travel_Reduction(self):
         if len(self.I) > settings.THRESHOLD:
@@ -67,8 +78,8 @@ class Country(object):
         else:
             return None
 
-   def Disease_Transition(self):
-        transition_rates_dict=dict(zip(['SE','EI','IH','IF','IR','HF','HR','FR'][self.s_e,self.e_i,self.i_h,self.i_f,self.i_r,self.h_f,self.h_r,self.f_r])
+    def Disease_Transition(self):
+        transition_rates_dict=dict(zip(['SE','EI','IH','IF','IR','HF','HR','FR'][self.s_e,self.e_i,self.i_h,self.i_f,self.i_r,self.h_f,self.h_r,self.f_r]))
         keys=sorted(transition_rates_dict, key=transition_rates_dict.get)
         values=sorted(transition_rates_dict.values())
         temp=np.cumsum(values)
@@ -193,5 +204,5 @@ class Route(object):
         self.seats = seats
     
     def Schedule_Next(self,Now):
-        delta_t = int(abs(round(RNG.Normal(self.T, self.T_std), 0))
+        delta_t = int(abs(round(RNG.Normal(self.T, self.T_std), 0)))
         Flight_Generator.Schedule_Flight(Now+delta_t, self)
