@@ -4,6 +4,7 @@ import settings
 import csv
 from entities import *
 import numpy as np
+import pandas as pd
  
 countries = []
 Now = 0
@@ -39,12 +40,15 @@ def initialize():
     Flight_Generator.Initialize(countries)    
     
 def output():
-    import pandas as pd
-    sim_history = pd.DataFrame(columns=('Country','S','E','I','H','F','R','OnsetCases','Deaths'))
-    n_country = 0
+    col = ('Country','S','E','I','H','F','R','OnsetCases','Deaths')
+    sim_history = pd.DataFrame(columns=col)
+    #n_country = 0
     for co in countries:
-        offset = settings.maxIter*n_country
-        for i in range(settings.maxIter):
-            sim_history.loc[offset+i] = [co.name, co.S_history[i], co.E_history[i], co.I_history[i], co.H_history[i], co.F_history[i], co.R_history[i], co.onset_history[i], deaths[i]]
-        n_country = n_country + 1
+        #offset = settings.maxIter*n_country
+        #for i in range(settings.maxIter):
+        #    sim_history.loc[offset+i] = [co.name, co.S_history[i], co.E_history[i], co.I_history[i], co.H_history[i], co.F_history[i], co.R_history[i], co.onset_history[i], co.death_history[i]]
+        #n_country = n_country + 1
+        data = {'Country':[co.name]*(settings.maxIter+1), 'S':co.S_history, 'E':co.E_history, 'I':co.I_history, 'H':co.H_history, 'F':co.F_history, 'R':co.R_history, 'OnsetCases':co.onset_history, 'Deaths':co.death_history}
+        co_history = pd.DataFrame.from_dict(data)
+        sim_history = pd.concat((sim_history,co_history),ignore_index=True)
     return sim_history

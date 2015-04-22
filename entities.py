@@ -5,7 +5,6 @@ import RNG
 import heapq
 import numpy as np
 import csv
-import random
 
 class State:
     S, E, I, H, F, R = range(6)
@@ -76,13 +75,13 @@ class Country(object):
 
     def Disease_Transition(self):
         # S->E
-        n = RNG.Poisson(self.s_e)
+        n = np.random.poisson(self.s_e)
         E_new = [Person(self, State.E) for p in range(n)]
         self.E.extend(E_new)
         self.S = self.S - n
         
         # E->I
-        n = RNG.Poisson(self.e_i)
+        n = np.random.poisson(self.e_i)
         I_new = self.E[:n]
         self.E = self.E[n:]
         for p in I_new:
@@ -91,7 +90,7 @@ class Country(object):
         self.onset_history.append(n)
         
         # I->H
-        n = RNG.Poisson(self.i_h)
+        n = np.random.poisson(self.i_h)
         H_new = self.I[:n]
         self.I = self.I[n:]
         for p in H_new:
@@ -99,7 +98,7 @@ class Country(object):
         self.H.extend(H_new)
         
         # I->F
-        n = RNG.Poisson(self.i_f)
+        n = np.random.poisson(self.i_f)
         F_new = self.I[:n]
         self.I = self.I[n:]
         for p in F_new:
@@ -109,7 +108,7 @@ class Country(object):
         self.pop = self.pop - n
         
         # I->R
-        n = RNG.Poisson(self.i_r)
+        n = np.random.poisson(self.i_r)
         R_new = self.I[:n]
         self.I = self.I[n:]
         for p in R_new:
@@ -117,7 +116,7 @@ class Country(object):
         self.R.extend(R_new)
         
         # H->F
-        n = RNG.Poisson(self.h_f)
+        n = np.random.poisson(self.h_f)
         F_new = self.H[:n]
         self.H = self.H[n:]
         for p in F_new:
@@ -127,7 +126,7 @@ class Country(object):
         self.pop = self.pop - n
                 
         # H->R
-        n = RNG.Poisson(self.h_r)
+        n = np.random.poisson(self.h_r)
         R_new = self.H[:n]
         self.H = self.H[n:]
         for p in R_new:
@@ -135,7 +134,7 @@ class Country(object):
         self.R.extend(R_new)
         
         # F->R
-        n = RNG.Poisson(self.f_r)
+        n = np.random.poisson(self.f_r)
         R_new = self.F[:n]
         self.F = self.F[n:]
         for p in R_new:
@@ -188,7 +187,7 @@ class Flight_Generator(object):
             
             #select individuals at random from the S & E populations
             poisson_lambda=float(len(flight.orig.E))/float(len(flight.orig.E)+flight.orig.S)
-            s=np.sum(RNG.Poisson(poisson_lambda, flight.seats))
+            s=np.sum(np.random.poisson(poisson_lambda, flight.seats))
 
             #remove them from origin population list and add to destination population list
             if s > 0:
@@ -224,5 +223,6 @@ class Route(object):
     
     def Schedule_Next(self,Now):
         tf = max([self.orig.travel_factor, self.dest.travel_factor])
-        delta_t = int(abs(round(RNG.Normal(self.T*tf, self.T_std), 0)))
+        #delta_t = int(abs(round(RNG.Normal(self.T*tf, self.T_std), 0)))
+        delta_t = np.random.poisson(self.T*tf)
         Flight_Generator.Schedule_Flight(Now+delta_t, self)
