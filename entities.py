@@ -54,6 +54,9 @@ class Country(object):
         self.onset_history = [0]
         self.death_history = [0]
         
+        # Travel Factor
+        self.travel_factor = 1
+        
         # Initialize transition parameters
         self.Update_Disease_Model()
             
@@ -70,47 +73,74 @@ class Country(object):
         self.i_r = (1-self.percent_hospitalized) * (1-self.fatality_rate) * len(self.I) * (1/self.infectious_period)
         self.i_f = (1-self.percent_hospitalized) * self.fatality_rate * len(self.I) * (1/self.symptoms_to_death)
         self.h_r = (1-self.fatality_rate) * len(self.H) * (1/self.hospital_to_noninfectious)
-        
-    def Travel_Reduction(self):
-        if len(self.I) > settings.THRESHOLD:
-            reduction_factor = settings.REDUCTION_0 + settings.REDUCTION_SLOPE * (len(self.I) - settings.THRESHOLD)
-            return reduction_factor
-        else:
-            return None
 
-   def Disease_Transition(self):
-        transition_rates=[self.s_e,self.e_i,self.i_h,self.i_f,self.i_r,self.h_f,self.h_r,self.f_r]
-        pop_list=[self.S,self.E,self.I,self.H,self.F,self.R]
-        states=[S,E,I,H,F,R]
-        for r in range(0,len(transition_rates)):
-            if r < 2:
-                n = RNG.Poisson(transition_rates[r]) # number of people to transition
-                temp = pop_list[r][:n]
-                del pop_list[r][0:n]
-                for p in temp:
-                    p.state=states[r+1]
-                    pop_list[r+1].append(p)
-            elif r < 5:
-                n = RNG.Poisson(transition_rates[r]) # number of people to transition
-                temp = pop_list[2][:n]
-                del pop_list[2][0:n]
-                for p in temp:
-                    p.state=states[r+1]
-                    pop_list[r+1].append(p)
-            elif r < 7:
-                n = RNG.Poisson(transition_rates[r]) # number of people to transition
-                temp = pop_list[3][:n]
-                del pop_list[3][0:n]
-                for p in temp:
-                    p.state=states[r-1]
-                    pop_list[r-1].append(p)
-            else:
-                n = RNG.Poisson(transition_rates[r]) # number of people to transition
-                temp = pop_list[4][:n]
-                del pop_list[4][0:n]
-                for p in temp:
-                    p.state=states[r-2]
-                    pop_list[r-2].append(p)
+    def Disease_Transition(self):
+        # S->E
+        n = RNG.Poisson(self.s_e)
+        E_new = [Person(self, State.E) for p in range(n)]
+        self.E.extend(E_new)
+        self.S = self.S - n
+        
+        # E->I
+        n = RNG.Poisson(self.e_i)
+        I_new = self.E[:n]
+        self.E = self.E[n:]
+        for p in I_new:
+            p.state = State.E
+        self.I.extend(I_new)
+        self.onset_history.append(n)
+        
+        # I->H
+        n = RNG.Poisson(self.i_h)
+        H_new = self.I[:n]
+        self.I = self.I[n:]
+        for p in H_new:
+            p.state = State.H
+        self.H.extend(H_new)
+        
+        # I->F
+        n = RNG.Poisson(self.i_f)
+        F_new = self.I[:n]
+        self.I = self.I[n:]
+        for p in F_new:
+            p.state = State.F
+        self.F.extend(F_new)
+        self.death_history.append(n)
+        self.pop = self.pop - n
+        
+        # I->R
+        n = RNG.Poisson(self.i_r)
+        R_new = self.I[:n]
+        self.I = self.I[n:]
+        for p in R_new:
+            p.state = State.R
+        self.R.extend(R_new)
+        
+        # H->F
+        n = RNG.Poisson(self.h_f)
+        F_new = self.H[:n]
+        self.H = self.H[n:]
+        for p in F_new:
+            p.state = State.R
+        self.F.extend(F_new)
+        self.death_history[-1] = self.death_history[-1] + n
+        self.pop = self.pop - n
+                
+        # H->R
+        n = RNG.Poisson(self.h_r)
+        R_new = self.H[:n]
+        self.H = self.H[n:]
+        for p in R_new:
+            p.state = State.R
+        self.R.extend(R_new)
+        
+        # F->R
+        n = RNG.Poisson(self.f_r)
+        R_new = self.F[:n]
+        self.F = self.F[n:]
+        for p in R_new:
+            p.state = State.R
+        self.R.extend(R_new)       
         
 class Person(object):
     def __init__(self, location, state = State.E):
@@ -150,12 +180,6 @@ class Flight_Generator(object):
     @classmethod
     def Schedule_Flight(cls, time, route):
         heapq.heappush(cls.flightq, (time, route))
-
-    @classmethod
-    def Reduce(cls, country, factor):
-        affected_routes = [r for r in cls.routes if r.orig == country or r.dest == country]
-        for r in affected_routes:
-            r.T = factor*r.T
     
     @classmethod
     def Execute_Todays_Flights(cls, Now):
@@ -199,5 +223,6 @@ class Route(object):
         self.seats = seats
     
     def Schedule_Next(self,Now):
-        delta_t = int(abs(round(RNG.Normal(self.T, self.T_std), 0)))
+        tf = max([self.orig.travel_factor, self.dest.travel_factor])
+        delta_t = int(abs(round(RNG.Normal(self.T*tf, self.T_std), 0)))
         Flight_Generator.Schedule_Flight(Now+delta_t, self)
