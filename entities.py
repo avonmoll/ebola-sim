@@ -206,7 +206,7 @@ class Flight_Generator(object):
                     individual.location = flight.dest
      
             flight.orig.S=flight.orig.S - (flight.seats - s)
-            flight.dest.S=flight.orig.S + (flight.seats - s)
+            flight.dest.S=flight.dest.S + (flight.seats - s)
             flight.orig.pop = flight.orig.pop - flight.seats
             flight.dest.pop = flight.dest.pop + flight.seats
             
