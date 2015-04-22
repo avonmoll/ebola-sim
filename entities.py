@@ -78,7 +78,6 @@ class Country(object):
         else:
             return None
 
-<<<<<<< HEAD
    def Disease_Transition(self):
         transition_rates=[self.s_e,self.e_i,self.i_h,self.i_f,self.i_r,self.h_f,self.h_r,self.f_r]
         pop_list=[self.S,self.E,self.I,self.H,self.F,self.R]
@@ -112,47 +111,6 @@ class Country(object):
                 for p in temp:
                     p.state=states[r-2]
                     pop_list[r-2].append(p)
-                    
-=======
-    def Disease_Transition(self):
-        transition_rates_dict=dict(zip(['SE','EI','IH','IF','IR','HF','HR','FR'][self.s_e,self.e_i,self.i_h,self.i_f,self.i_r,self.h_f,self.h_r,self.f_r]))
-        keys=sorted(transition_rates_dict, key=transition_rates_dict.get)
-        values=sorted(transition_rates_dict.values())
-        temp=np.cumsum(values)
-        index=np.argmax(temp,random.randrange(temp[0],temp[len(temp)-1]))
-        if(keys[index]=='SE'):
-            self.S=self.S-1
-            self.E.append(Person(self.code)) #create person object
-        elif(keys[index]=='EI'):
-            person_trans=self.E.pop
-            person_trans.state='I'
-            self.I.append(person_trans) 
-        elif(keys[index]=='IH'):
-            person_trans=self.I.pop
-            person_trans.state='H'
-            self.H.append(person_trans)
-        elif(keys[index]=='IF'):
-            person_trans=self.I.pop
-            person_trans.state='F'
-            self.F.append(person_trans)
-        elif(keys[index]=='IR'):
-            person_trans=self.I.pop
-            person_trans.state='R'
-            self.R.append(person_trans)
-        elif(keys[index]=='HF'):
-            person_trans=self.H.pop
-            person_trans.state='F'
-            self.F.append(person_trans)
-        elif(keys[index]=='HR'):
-            person_trans=self.H.pop
-            person_trans.state='R'
-            self.R.append(person_trans)
-        elif(keys[index]=='FR'):
-            person_trans=self.F.pop
-            person_trans.state='R'
-            self.R.append(person_trans)
-
->>>>>>> 8e9b61aec96f3dce1d15e4de345fd07bda8cc353
         
 class Person(object):
     def __init__(self, location, state = State.E):
