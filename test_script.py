@@ -10,11 +10,20 @@ import pandas as pd
 import time
 import matplotlib.pyplot as plt
 import numpy as np
-import settings
 #import pprofile
 
-threshhold_setting=[]
+THRESHOLD_MIN=100
+THRESHOLD_MAX=1000
+THRESHOLD_RANGE=np.linspace(THRESHOLD_MIN,THRESHOLD_MAX,3)  
+                                                                       
+TF0_MIN=1.5
+TF0_MAX=4
+TF0_RANGE=np.linspace(TF0_MIN,TF0_MAX,3)                              
+
+THRESHOLD_setting=[]
 TF0_setting=[]
+
+n = 5 # how many times to aggregate
 
 def main():
     # TODO : mess with settings
@@ -26,20 +35,20 @@ def main():
     #profiler = pprofile.Profile()
     
     #with profiler:
-    for threshhold in settings.THRESHHOLD_RANGE:
-        for TF0 in settings.TF0_RANGE:
-            threshhold_setting=threshhold
-            TF0_setting=TF0
-            for i in range(2):
+    for threshold in THRESHOLD_RANGE:
+        for TF0 in TF0_RANGE:
+            ebola_sim.settings.THRESHOLD = threshold
+            ebola_sim.settings.TF0 = TF0
+            for i in range(n):
                 tic = time.clock()
                 output = engine.run(ebola_sim)
                 results.append(output)
                 toc = time.clock()
                 print '%02d Execution Time  -- %d:%02d mm:ss'%(i, int((toc-tic)/60),int((toc-tic)%60))
+            aggregate(results, 'results/%s_%s_%s_%s'%(str(int(threshold)),str(int(TF0*100)),str(settings.maxIter),str(n)))
     #profiler.dump_stats('profile')
-    aggregate(results)
 
-def aggregate(res_list):
+def aggregate(res_list, filename):
     countries = res_list[0]['Country']
     res = pd.concat((res_list.pop(),res_list.pop()))
     while len(res_list) > 0:
@@ -49,12 +58,18 @@ def aggregate(res_list):
     res_ave.insert(0,'Country',countries)
     res_std = by_row_index.std()
     res_std.insert(0,'Country',countries)
-    res_ave.to_csv('results_ave.csv')
-    res_std.to_csv('results_std.csv')
+    res_ave.to_csv('%s_ave.csv'%(filename))
+    res_std.to_csv('%s_std.csv'%(filename))
 
-def plot_results():
-    res_ave = pd.read_csv('results_ave.csv', index_col = False)
-    res_std = pd.read_csv('results_std.csv', index_col = False)
+def plot_results(filestub):
+    '''Plots all countries data contained in the files corresponding to filestub
+    
+    For example, if filestub = 'results/100_200_180_5' this corresponds to results
+    where THRESHOLD = 100 and TF0 = 2.00 and settings.maxIter = 180 and  n = 5
+    '''
+    
+    res_ave = pd.read_csv('%s_ave.csv'%(filestub), index_col = False)
+    res_std = pd.read_csv('%s_std.csv'%(filestub), index_col = False)
     
     ave_grouped = res_ave.groupby('Country')
     std_grouped = res_std.groupby('Country')
@@ -105,4 +120,3 @@ def plot_results():
 
 if __name__=='__main__':
     main()
-    plot_results()
