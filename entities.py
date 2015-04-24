@@ -168,13 +168,16 @@ class Flight_Generator(object):
             csvreader = csv.reader(csvfile,delimiter=',')
             csvreader.next()
             for row in csvreader:
-                orig = [c for c in countries if c.name == row[-5]][0]
-                dest = [c for c in countries if c.name == row[-4]][0]
-                T = float(row[-3])
-                T_std = float(row[-2])
-                seats = int(row[-1])
-                cls.routes.append(Route(orig,dest,T,T_std,seats))
-                cls.routes[-1].Schedule_Next(0)                
+                try:
+                    orig = [c for c in countries if c.name == row[-5]][0]
+                    dest = [c for c in countries if c.name == row[-4]][0]
+                    T = float(row[-3])
+                    T_std = float(row[-2])
+                    seats = int(row[-1])
+                    cls.routes.append(Route(orig,dest,T,T_std,seats))
+                    cls.routes[-1].Schedule_Next(0)                
+                except IndexError as e:
+                    pass
 
     @classmethod
     def Schedule_Flight(cls, time, route):
