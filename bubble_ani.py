@@ -72,9 +72,9 @@ def get_data(filestub):
     
 data = {}
 maxDays = 0
-data, maxDays = get_data('results/100_150_180_5')
+data, maxDays = get_data('results/0_10_180_5')
 
-msg = ax.text(-124, 0, ' ', fontsize=16)
+msg = ax.text(-124, 0, ' ', fontsize=24)
 
 def animate(i):
     global data, bubbles
@@ -86,12 +86,13 @@ def animate(i):
     for country in bubbles:
         cases = data[country][i]
         if cases > 1:
-            sz = 40*np.log(cases)
+            sz = 10*np.log(cases)
         else:
             sz = 0
-        sz = min(data[country][i],100)
+        sz = min(sz,1000)
         bubbles[country].set_markersize(sz)
         dots.append(bubbles[country])
+    fig.savefig('%04d.png'%(i))
     return dots
 
 #Init only required for blitting to give a clean slate.
@@ -109,6 +110,6 @@ def init():
 ani = animation.FuncAnimation(fig, animate, np.arange(0, maxDays), init_func=init,
     interval=75, blit=True)
     
-ani.save('bubble_ani.mp4')
+#ani.save('bubble_ani.mp4')
 
 plt.show()
