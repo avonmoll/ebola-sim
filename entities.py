@@ -175,6 +175,8 @@ class Flight_Generator(object):
             _, flight = heapq.heappop(cls.flightq)
             
             #select individuals at random from the S & E populations
+            if flight.orig.E+flight.orig.S <= 0:
+                break
             poisson_lambda=float(flight.orig.E)/float(flight.orig.E+flight.orig.S)
             s=np.sum(np.random.poisson(poisson_lambda, flight.seats))
 

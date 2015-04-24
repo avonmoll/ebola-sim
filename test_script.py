@@ -30,7 +30,7 @@ n = 5 # how many times to aggregate
 
 def main():
     # TODO : mess with settings
-    ebola_sim.settings.maxIter = 365*2
+    ebola_sim.settings.maxIter = 365*5
     ebola_sim.settings.I0['Guinea'] = 50
     # ebola_sim.settings.I0['Liberia'] = 50
     # ebola_sim.settings.I0['Sierra Leone'] = 50
