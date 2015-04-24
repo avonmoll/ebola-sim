@@ -19,4 +19,5 @@ def run(application):
     for i in range(application.settings.maxIter):
         application.iter()
         application.Now += 1
+        print i
     return application.output()

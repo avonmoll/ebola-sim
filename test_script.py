@@ -15,11 +15,13 @@ from scipy.stats import t as student_t
 
 THRESHOLD_MIN=100
 THRESHOLD_MAX=1000
-THRESHOLD_RANGE=np.linspace(THRESHOLD_MIN,THRESHOLD_MAX,3)  
+# THRESHOLD_RANGE=np.linspace(THRESHOLD_MIN,THRESHOLD_MAX,3)  
+THRESHOLD_RANGE = [1000]
                                                                        
 TF0_MIN=1.5
 TF0_MAX=4
-TF0_RANGE=np.linspace(TF0_MIN,TF0_MAX,3)                              
+# TF0_RANGE=np.linspace(TF0_MIN,TF0_MAX,3)       
+TF0_RANGE=[2]                       
 
 THRESHOLD_setting=[]
 TF0_setting=[]
@@ -28,8 +30,13 @@ n = 5 # how many times to aggregate
 
 def main():
     # TODO : mess with settings
-    ebola_sim.settings.maxIter = 180
+    ebola_sim.settings.maxIter = 365*2
     ebola_sim.settings.I0['Guinea'] = 50
+    # ebola_sim.settings.I0['Liberia'] = 50
+    # ebola_sim.settings.I0['Sierra Leone'] = 50
+    # ebola_sim.settings.I0['Nigeria'] = 50
+    # ebola_sim.settings.I0['Senegal'] = 50
+    # ebola_sim.settings.I0['Mali'] = 50
     
     results = []
     
