@@ -11,6 +11,9 @@ fig, ax = plt.subplots(figsize=(30,30))
 
 #line, = ax.plot(x, np.sin(x))
 
+def runningMeanFast(x, N):
+    return np.convolve(x, np.ones((N,))/N)[(N-1):]
+
 ebola_countries = []
 with open('country_data.csv','rb') as csvfile:
     country_reader = csv.reader(csvfile, delimiter=',')
@@ -64,34 +67,37 @@ def get_data(filestub):
     for country, c_ave in ave_grouped:
         #c_std = std_grouped.get_group(country)
         o_ave = np.array(c_ave['OnsetCases'])
+        i_ave = np.array(c_ave['I'])
         #d_ave, d_std = np.array(c_ave['Deaths'])
         cum_o = np.cumsum(o_ave)
         #cum_d = np.cumsum(d_ave)
-        d[country] = cum_o
+        #d[country] = cum_o
+        d[country] = runningMeanFast(i_ave,8)
     return d, days
     
 data = {}
 maxDays = 0
-data, maxDays = get_data('results/100_150_180_5')
+data, maxDays = get_data('results/0_10_1825_5')
 
-msg = ax.text(-124, 0, ' ', fontsize=16)
+msg = ax.text(-124, 0, ' ', fontsize=24)
 
 def animate(i):
     global data, bubbles
     #ax.set_title('Day: %03d of %03d'%(i, maxDays),fontsize=16)
-    msg.set_text('Day %03d of %03d'%(i, maxDays))
+    msg.set_text('Day %03d of %03d'%(i, 1000))
     #msg = ax.text(-124,0,'Day %03d of %03d'%(i, maxDays))
     dots = []
     dots.append(msg)
     for country in bubbles:
         cases = data[country][i]
         if cases > 1:
-            sz = 40*np.log(cases)
+            sz = 4*np.log(cases)
         else:
             sz = 0
-        sz = min(data[country][i],100)
+        #sz = min(data[country][i],100)
         bubbles[country].set_markersize(sz)
         dots.append(bubbles[country])
+    #fig.savefig("%04d.png"%(i), bbox_inches='tight')
     return dots
 
 #Init only required for blitting to give a clean slate.
@@ -106,9 +112,9 @@ def init():
         dots.append(bubbles[country])
     return dots
 
-ani = animation.FuncAnimation(fig, animate, np.arange(0, maxDays), init_func=init,
-    interval=75, blit=True)
+ani = animation.FuncAnimation(fig, animate, np.arange(0, 1000), init_func=init,
+    interval=10, blit=True)
     
-ani.save('bubble_ani.mp4')
+#ani.save('bubble_ani.mp4')
 
 plt.show()
