@@ -15,15 +15,17 @@ def iter():
         co.Update_Disease_Model()
         
         # Perform travel restrictions based on epidemic size
-        if len(co.I) >= settings.THRESHOLD:
-            co.travel_factor = settings.TF0 + settings.TF_SLOPE * (len(co.I) - settings.THRESHOLD)
+        if co.I >= settings.THRESHOLD:
+            co.travel_factor = settings.TF0 + settings.TF_SLOPE * (co.I - settings.THRESHOLD)
 
         co.S_history.append(co.S)
-        co.E_history.append(len(co.E))
-        co.I_history.append(len(co.I))
-        co.H_history.append(len(co.H))
-        co.F_history.append(len(co.F))
-        co.R_history.append(len(co.R))
+        co.E_history.append(co.E)
+        co.I_history.append(co.I)
+        co.H_history.append(co.H)
+        co.F_history.append(co.F)
+        co.R_history.append(co.R)
+        co.onset_history.append(co.cases)
+        co.death_history.append(co.deaths)
 
     Flight_Generator.Execute_Todays_Flights(Now)
             

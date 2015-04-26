@@ -31,27 +31,29 @@ class Country(object):
         
         # Containers for compartmentalized model of population
         self.S = self.pop
-        self.E = []
-        self.I = []
-        self.H = []
-        self.F = []
-        self.R = []
+        self.E = 0
+        self.I = 0
+        self.H = 0
+        self.F = 0
+        self.R = 0
         
         # Seed initial infected (I) population
         if (self.name in settings.I0) and (settings.I0[self.name] > 0):
             I0 = settings.I0[self.name]
-            self.S = self.S - settings.I0[self.name]
-            self.I = [Person(location = self, state = State.I) for p in range(I0)]
+            self.S = self.S - I0
+            self.E = self.E + I0
         
         # Timeseries history of population makeup
         self.S_history = [self.S]
-        self.E_history = [len(self.E)]
-        self.I_history = [len(self.I)]
-        self.H_history = [len(self.H)]
-        self.F_history = [len(self.F)]
-        self.R_history = [len(self.R)]
+        self.E_history = [self.E]
+        self.I_history = [self.I]
+        self.H_history = [self.H]
+        self.F_history = [self.F]
+        self.R_history = [self.R]
         self.onset_history = [0]
         self.death_history = [0]
+        self.cases = 0
+        self.deaths = 0
         
         # Travel Factor
         self.travel_factor = 1
@@ -64,97 +66,66 @@ class Country(object):
         
         No return value
         """
-        self.s_e = (self.beta_i * self.S * len(self.I) + self.beta_h * self.S * len(self.H) + self.beta_f * self.S * len(self.F))/self.pop
-        self.e_i = len(self.E) * (1/self.incubation_period)
-        self.i_h = self.percent_hospitalized * len(self.I) * (1/self.symptoms_to_hospital)
-        self.h_f = self.fatality_rate * len(self.H) * (1/self.hospital_to_death)
-        self.f_r = len(self.F) * (1/self.death_to_burial)
-        self.i_r = (1-self.percent_hospitalized) * (1-self.fatality_rate) * len(self.I) * (1/self.infectious_period)
-        self.i_f = (1-self.percent_hospitalized) * self.fatality_rate * len(self.I) * (1/self.symptoms_to_death)
-        self.h_r = (1-self.fatality_rate) * len(self.H) * (1/self.hospital_to_noninfectious)
+        self.s_e = (self.beta_i * self.S * self.I + self.beta_h * self.S * self.H + self.beta_f * self.S * self.F)/self.pop
+        self.e_i = self.E * (1/self.incubation_period)
+        self.i_h = self.percent_hospitalized * self.I * (1/self.symptoms_to_hospital)
+        self.h_f = self.fatality_rate * self.H * (1/self.hospital_to_death)
+        # print self.fatality_rate, self.H, self.hospital_to_death, self.h_f
+        self.f_r = self.F * (1/self.death_to_burial)
+        self.i_r = (1-self.percent_hospitalized) * (1-self.fatality_rate) * self.I * (1/self.infectious_period)
+        self.i_f = (1-self.percent_hospitalized) * self.fatality_rate * self.I * (1/self.symptoms_to_death)
+        self.h_r = (1-self.fatality_rate) * self.H * (1/self.hospital_to_noninfectious)
 
     def Disease_Transition(self):
         # S->E
         n = np.random.poisson(self.s_e)
-        E_new = [Person(self, State.E) for p in range(n)]
-        self.E.extend(E_new)
+        n = n if n <= self.S else self.S
         self.S = self.S - n
+        self.E = self.E + n
         
         # E->I
         n = np.random.poisson(self.e_i)
-        I_new = self.E[:n]
-        self.E = self.E[n:]
-        for p in I_new:
-            p.state = State.E
-        self.I.extend(I_new)
-        self.onset_history.append(n)
+        n = n if n <= self.E else self.E
+        self.E = self.E - n
+        self.I = self.I + n
         
         # I->H
         n = np.random.poisson(self.i_h)
-        H_new = self.I[:n]
-        self.I = self.I[n:]
-        for p in H_new:
-            p.state = State.H
-        self.H.extend(H_new)
+        n = n if n <= self.I else self.I
+        self.I = self.I - n
+        self.H = self.H + n
         
         # I->F
         n = np.random.poisson(self.i_f)
-        F_new = self.I[:n]
-        self.I = self.I[n:]
-        for p in F_new:
-            p.state = State.F
-        self.F.extend(F_new)
-        self.death_history.append(n)
+        n = n if n <= self.I else self.I
+        self.I = self.I - n
+        self.F = self.F + n
         self.pop = self.pop - n
         
         # I->R
         n = np.random.poisson(self.i_r)
-        R_new = self.I[:n]
-        self.I = self.I[n:]
-        for p in R_new:
-            p.state = State.R
-        self.R.extend(R_new)
+        n = n if n <= self.I else self.I
+        self.I = self.I - n
+        self.R = self.R + n
         
         # H->F
         n = np.random.poisson(self.h_f)
-        F_new = self.H[:n]
-        self.H = self.H[n:]
-        for p in F_new:
-            p.state = State.R
-        self.F.extend(F_new)
-        self.death_history[-1] = self.death_history[-1] + n
+        n = n if n <= self.H else self.H
+        self.H = self.H - n
+        self.F = self.F + n
         self.pop = self.pop - n
                 
         # H->R
         n = np.random.poisson(self.h_r)
-        R_new = self.H[:n]
-        self.H = self.H[n:]
-        for p in R_new:
-            p.state = State.R
-        self.R.extend(R_new)
+        n = n if n <= self.H else self.H
+        self.H = self.H - n
+        self.R = self.R + n
         
         # F->R
         n = np.random.poisson(self.f_r)
-        R_new = self.F[:n]
-        self.F = self.F[n:]
-        for p in R_new:
-            p.state = State.R
-        self.R.extend(R_new)       
-        
-class Person(object):
-    def __init__(self, location, state = State.E):
-        """Instantiate a Person object when there is a transition from S->E (default)
-        
-        Keyword arguments:
-        location -- a country object indicating the country this person occupies
-        state    -- a State object corresponding to one of {S,E,I,F,H,R} indicating
-                    the disease state of the individual
-                    
-        In general, only individuals in states other than S will be instantiated,
-        lest the memory get out of control.
-        """
-        self.location = location
-        self.state = state
+        n = n if n <= self.F else self.F
+        self.F = self.F - n
+        self.R = self.R + n    
         
 class Flight_Generator(object):
     flightq = []
@@ -189,24 +160,16 @@ class Flight_Generator(object):
             _, flight = heapq.heappop(cls.flightq)
             
             #select individuals at random from the S & E populations
-            poisson_lambda=float(len(flight.orig.E))/float(len(flight.orig.E)+flight.orig.S)
+            if flight.orig.E+flight.orig.S <= 0:
+                break
+            poisson_lambda=float(flight.orig.E)/float(flight.orig.E+flight.orig.S)
             s=np.sum(np.random.poisson(poisson_lambda, flight.seats))
 
             #remove them from origin population list and add to destination population list
             if s > 0:
-                s = len(flight.orig.E) if s > len(flight.orig.E) else s
-                np.random.shuffle(flight.orig.E)
-                exposed_transfer=flight.orig.E[:s]
-                flight.orig.E = flight.orig.E[s:]
-            
-                # TODO : make the selection from I population random such as:
-                #         infected_transfer = [flight.orig.I[i] for i in sorted(np.random.sample(xrange(len(flight.orig.I)),s))]
-            
-                flight.dest.E.extend(exposed_transfer)
-     
-                #update these individuals' location with the destination
-                for individual in exposed_transfer:
-                    individual.location = flight.dest
+                s = flight.orig.E if s > flight.orig.E else s
+                flight.orig.E=flight.orig.E - s
+                flight.dest.E=flight.dest.E + s
      
             flight.orig.S=flight.orig.S - (flight.seats - s)
             flight.dest.S=flight.dest.S + (flight.seats - s)
