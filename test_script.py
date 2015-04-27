@@ -29,7 +29,6 @@ TF0_setting=[]
 n = 5 # how many times to aggregate
 
 def main():
-    # TODO : mess with settings
     ebola_sim.settings.maxIter = 365*5
     ebola_sim.settings.I0['Guinea'] = 50
     # ebola_sim.settings.I0['Liberia'] = 50

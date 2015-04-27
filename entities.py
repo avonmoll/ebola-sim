@@ -36,6 +36,8 @@ class Country(object):
         self.H = 0
         self.F = 0
         self.R = 0
+        self.cases = 0
+        self.deaths = 0
         
         # Seed initial infected (I) population
         if (self.name in settings.I0) and (settings.I0[self.name] > 0):
@@ -52,9 +54,7 @@ class Country(object):
         self.R_history = [self.R]
         self.onset_history = [0]
         self.death_history = [0]
-        self.cases = 0
-        self.deaths = 0
-        
+  
         # Travel Factor
         self.travel_factor = 1
         
@@ -70,13 +70,17 @@ class Country(object):
         self.e_i = self.E * (1/self.incubation_period)
         self.i_h = self.percent_hospitalized * self.I * (1/self.symptoms_to_hospital)
         self.h_f = self.fatality_rate * self.H * (1/self.hospital_to_death)
-        # print self.fatality_rate, self.H, self.hospital_to_death, self.h_f
         self.f_r = self.F * (1/self.death_to_burial)
         self.i_r = (1-self.percent_hospitalized) * (1-self.fatality_rate) * self.I * (1/self.infectious_period)
         self.i_f = (1-self.percent_hospitalized) * self.fatality_rate * self.I * (1/self.symptoms_to_death)
         self.h_r = (1-self.fatality_rate) * self.H * (1/self.hospital_to_noninfectious)
 
     def Disease_Transition(self):
+        """Sample number of people to transition from Poisson for each disease state transition
+        
+        - Alters the number of people in each of the compartments of the population
+        - Tracks number of new cases and number of deaths for this day
+        """
         # S->E
         n = np.random.poisson(self.s_e)
         n = n if n <= self.S else self.S
@@ -88,6 +92,7 @@ class Country(object):
         n = n if n <= self.E else self.E
         self.E = self.E - n
         self.I = self.I + n
+        self.cases = n
         
         # I->H
         n = np.random.poisson(self.i_h)
@@ -101,6 +106,7 @@ class Country(object):
         self.I = self.I - n
         self.F = self.F + n
         self.pop = self.pop - n
+        self.deaths = n
         
         # I->R
         n = np.random.poisson(self.i_r)
@@ -114,6 +120,7 @@ class Country(object):
         self.H = self.H - n
         self.F = self.F + n
         self.pop = self.pop - n
+        self.deaths = self.deaths + n
                 
         # H->R
         n = np.random.poisson(self.h_r)
@@ -133,6 +140,10 @@ class Flight_Generator(object):
     
     @classmethod
     def Initialize(cls, countries):
+        """Clears the future event list for flights (flightq) and resets all Route instances stored in routes
+        
+        Route instances get reset using the data described in relevant_routes.csv in case any changes were made
+        """
         cls.flightq = []
         cls.routes = []
         with open('relevant_routes.csv') as csvfile:
@@ -152,10 +163,21 @@ class Flight_Generator(object):
 
     @classmethod
     def Schedule_Flight(cls, time, route):
+        """Wrapper function for pushing flight events onto the flightq
+        
+        This function enables different implementations to be dropped in for flightq in lieu of heapq
+        """
         heapq.heappush(cls.flightq, (time, route))
     
     @classmethod
     def Execute_Todays_Flights(cls, Now):
+        """Executes all flights whose event time are the current simulation timestamp
+        
+        - Each flight has a probability of drawing individuals from the E population, otherwise they come from S
+        - Each flight schedules the next flight along this route
+        - Flights are just tuples of int (timestamp) and a Route instance
+        - Adjusts origin and destination country instance's populations accordingly
+        """
         while(cls.flightq[0][0] == Now):
             _, flight = heapq.heappop(cls.flightq)
             
@@ -188,6 +210,10 @@ class Route(object):
         self.seats = seats
     
     def Schedule_Next(self,Now):
+        """Draw time delta from Poisson using mean interflight period and schedule a flight event
+        
+        - Automatically applies max travel factor between origin and destination countries
+        """
         tf = max([self.orig.travel_factor, self.dest.travel_factor])
         #delta_t = int(abs(round(RNG.Normal(self.T*tf, self.T_std), 0)))
         delta_t = np.random.poisson(self.T*tf)
